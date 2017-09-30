@@ -89,4 +89,44 @@ describe "head_object" do
     assert_equal(error.message, %{Can not find "something/not/real" in bucket #{TEST_BUCKET}})
   end
 
+  it "should give project headers" do
+    content = Time.now.to_s
+    CONNECTION.put_object(TEST_BUCKET, "test-head_object.csv", content)
+
+    response = CONNECTION.head_object(TEST_BUCKET, "test-head_object.csv")
+
+    assert_equal(response.headers['x-bz-file-name'], "test-head_object.csv")
+    assert_equal(response.headers['x-bz-content-sha1'], Digest::SHA1.hexdigest(content))
+    assert_equal(response.headers['Content-Type'], "text/csv")
+    assert_equal(response.headers['Content-Length'], content.size.to_s)
+
+    assert_equal(response.body, "")
+  end
+
+end
+
+describe "get_download_url" do
+  it "should generate download url" do
+    content = Time.now.to_s
+    CONNECTION.put_object(TEST_BUCKET, "test-get_download_url", content)
+
+    url = CONNECTION.get_download_url(TEST_BUCKET, "test-get_download_url")
+
+    assert_match(%r{https://f\d\d\d.backblazeb2.com/file/#{TEST_BUCKET}/test-get_download_url}, url)
+  end
+end
+
+describe "_get_bucket_id" do
+  it "should check b2_bucket_name and b2_bucket_id" do
+    connection = Fog::Storage.new(
+      provider: 'backblaze',
+      b2_account_id: '123',
+      b2_account_token: '123',
+      logger: CONNECTION.logger,
+      b2_bucket_name: 'test-auth-bucket',
+      b2_bucket_id: 'configured_bucket_id'
+    )
+
+    assert_equal(connection._get_bucket_id(connection.options[:b2_bucket_name]), connection.options[:b2_bucket_id])
+  end
 end

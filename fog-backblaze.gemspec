@@ -1,7 +1,6 @@
 # coding: utf-8
-lib = File.expand_path("../lib", __FILE__)
-$LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require "fog/backblaze/version"
+
+require_relative 'lib/fog/backblaze/version'
 
 Gem::Specification.new do |spec|
   spec.name          = "fog-backblaze"
@@ -28,9 +27,4 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.add_dependency "fog-core"
-  #spec.add_dependency "fog-json"
-
-  spec.add_development_dependency "bundler", ">= 1.15"
-  spec.add_development_dependency "rake", "~> 12.0"
-  spec.add_development_dependency "minitest", ">= 5.0"
 end

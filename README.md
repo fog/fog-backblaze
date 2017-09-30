@@ -1,8 +1,6 @@
 # Fog::Backblaze
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/fog/backblaze`. To experiment with that code, run `bin/console` for an interactive prompt.
-
-TODO: Delete this and the text above, and describe your gem
+Integration library for gem fog and [Backblaze B2 Cloud Storage](https://www.backblaze.com/b2/cloud-storage.html)
 
 ## Installation
 
@@ -12,24 +10,37 @@ Add this line to your application's Gemfile:
 gem 'fog-backblaze'
 ```
 
-And then execute:
+Or install it with gem:
 
-    $ bundle
-
-Or install it yourself as:
-
-    $ gem install fog-backblaze
+```sh
+gem install fog-backblaze
+```
 
 ## Usage
 
-TODO: Write usage instructions here
+```ruby
+require_relative "lib/fog/backblaze"
 
-## Development
+connection = Fog::Storage.new(
+  provider: 'backblaze',
+  b2_account_id: '123456',
+  b2_account_token: 'aaaaabbbbbccccddddeeeeeffffff111112222223333',
 
-After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake test` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
+  # optional, used to make some operations faster
+  b2_bucket_name: 'app-test',
+  b2_bucket_id: '6ec42006ec42006ec42',
 
-To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and tags, and push the `.gem` file to [rubygems.org](https://rubygems.org).
+  logger: Logger.new(STDOUT).tap {|l|
+    l.formatter = proc {|severity, datetime, progname, msg|
+      "#{severity.to_s[0]} - #{datetime.strftime("%T.%L")}: #{msg}\n"
+    }
+  },
 
-## Contributing
-
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/fog-backblaze.
+  # "token_cache" is a place to temporary store access token (valid for 24 hours) and some other value
+  # use  nil for memory storage (default)
+  # false to disable
+  # string for file
+  # Fog::Backblaze::TokenCache instance for custom cache storage
+  token_cache: 'file.txt'
+)
+```

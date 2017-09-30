@@ -1,0 +1,30 @@
+PATH
+  remote: .
+  specs:
+    fog-backblaze (0.1.0)
+      fog-core
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    builder (3.2.3)
+    excon (0.59.0)
+    fog-core (1.45.0)
+      builder
+      excon (~> 0.58)
+      formatador (~> 0.2)
+    formatador (0.2.5)
+    minitest (5.10.3)
+    rake (12.1.0)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  bundler (>= 1.15)
+  fog-backblaze!
+  minitest (>= 5.0)
+  rake (~> 12.0)
+
+BUNDLED WITH
+   1.15.4

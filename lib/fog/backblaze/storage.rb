@@ -5,24 +5,11 @@ class Fog::Storage::Backblaze < Fog::Service
   requires :b2_account_id, :b2_account_token
   recognizes :b2_bucket_name, :b2_bucket_id, :token_cache, :logger
 
-  #b2_account_id: '',
-  #b2_account_token: '',
-  #b2_bucket_id: '',
-  #b2_bucket_name: 'bober-test',
-  #
-  #requires :softlayer_username, :softlayer_api_key, :softlayer_cluster
-  #recognizes :persistent, :softlayer_storage_account, :softlayer_temp_url_key, :softlayer_bluemix_objstor_auth_url
-
   model_path 'fog/backblaze/models'
   model       :directory
   collection  :directories
   model       :file
   collection  :files
-  #model       :account
-
-  #request :get_object
-  #request :head_object
-  #request :put_object
 
   class Mock
     #include Integrity
@@ -65,9 +52,6 @@ class Fog::Storage::Backblaze < Fog::Service
   end
 
   class Real
-    #include Integrity
-
-    #attr_reader :auth_url, :cluster
     attr_reader :token_cache, :options
 
     def initialize(options = {})
@@ -78,11 +62,13 @@ class Fog::Storage::Backblaze < Fog::Service
       end
 
       @token_cache = if options[:token_cache].nil?
-        Fog::Backblaze::MemoryTokenCache.new
+        Fog::Backblaze::TokenCache.new
       elsif options[:token_cache] === false
-        Fog::Backblaze::NullTokenCache.new
+        Fog::Backblaze::TokenCache::NullTokenCache.new
+      elsif token_cache.is_a?(Fog::Backblaze::TokenCache)
+        token_cache
       else
-        Fog::Backblaze::TokenCache.new(options[:token_cache])
+        Fog::Backblaze::TokenCache::FileTokenCache.new(options[:token_cache])
       end
     end
 
@@ -91,11 +77,9 @@ class Fog::Storage::Backblaze < Fog::Service
     end
 
     def put_bucket(key, extra_options)
-      p [:put_bucket, key, extra_options]
-
       options = {
         accountId: @options[:b2_account_id],
-        bucketType: 'allPrivate',
+        bucketType: extra_options[:public] ? 'allPublic' : 'allPrivate',
         bucketName: key,
       }.merge(extra_options)
 
