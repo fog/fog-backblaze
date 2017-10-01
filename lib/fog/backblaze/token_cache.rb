@@ -88,10 +88,14 @@ class Fog::Backblaze::TokenCache
   def write_part(name, value, ttl = 3600)
     ttl = 3600 if ttl.nil?
     name = name.to_s
-    @data[name] = {
-      'value' => value,
-      'expires_at' => ::Time.at(::Time.now + ttl - 1).to_s
-    }
+    if value.nil?
+      @data.delete(name)
+    else
+      @data[name] = {
+        'value' => value,
+        'expires_at' => ::Time.at(::Time.now + ttl - 1).to_s
+      }
+    end
   end
 
   def reset
