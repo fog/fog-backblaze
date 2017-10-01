@@ -7,7 +7,8 @@ class Fog::Storage::Backblaze::Directories < Fog::Collection
   end
 
   def get(name)
-    bucket = service.list_buckets.detect {|bucket| bucket['bucketName'] == name }
+    list_response = service.list_buckets
+    bucket = list_response.json['buckets'].detect {|bucket| bucket['bucketName'] == name }
     return new(bucket) if bucket
   end
 

@@ -2,6 +2,8 @@ module Fog
   module Backblaze
     module JSONReponse
 
+      attr_writer :json
+
       def raw_body
         @body
       end
@@ -11,7 +13,7 @@ module Fog
       end
 
       def assign_json_body!
-        @body = json
+        self.body = json
       end
 
       def josn_response?

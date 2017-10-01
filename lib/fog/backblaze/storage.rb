@@ -1,5 +1,6 @@
 require 'json'
 require 'digest'
+require 'cgi'
 
 class Fog::Storage::Backblaze < Fog::Service
   requires :b2_account_id, :b2_account_token
@@ -61,7 +62,7 @@ class Fog::Storage::Backblaze < Fog::Service
         Logger.new("/dev/null")
       end
 
-      @token_cache = if options[:token_cache].nil?
+      @token_cache = if options[:token_cache].nil? || options[:token_cache] == :memory
         Fog::Backblaze::TokenCache.new
       elsif options[:token_cache] === false
         Fog::Backblaze::TokenCache::NullTokenCache.new
@@ -76,10 +77,12 @@ class Fog::Storage::Backblaze < Fog::Service
       @logger
     end
 
+    ## Buckets
+
     def put_bucket(key, extra_options = {})
       options = {
         accountId: @options[:b2_account_id],
-        bucketType: extra_options[:public] ? 'allPublic' : 'allPrivate',
+        bucketType: extra_options.delete(:public) ? 'allPublic' : 'allPrivate',
         bucketName: key,
       }.merge(extra_options)
 
@@ -116,7 +119,57 @@ class Fog::Storage::Backblaze < Fog::Service
       end
 
       reponse.body = bucket
+      reponse.json = bucket
       return reponse
+    end
+
+    def delete_bucket(bucket_name, options = {})
+      bucket_id = _get_bucket_id(bucket_name)
+
+      unless bucket_id
+        raise Fog::Errors::NotFound, "Can not bucket #{bucket_name}"
+      end
+
+      response = b2_command(:b2_delete_bucket,
+        body: {
+          bucketId: bucket_id,
+          accountId: @options[:b2_account_id]
+        }
+      )
+
+      if !options[:is_retrying]
+        if response.status == 400 && response.json['message'] =~ /Bucket .+ does not exist/
+          logger.info("Try drop cache and try again")
+          @token_cache.buckets = nil
+          return delete_bucket(bucket_name, is_retrying: true)
+        end
+      end
+
+      if response.status >= 400
+        raise Fog::Errors::Error, "Failed delete_bucket, status = #{response.status} #{response.body}"
+      end
+
+      if cached = @token_cache.buckets
+        cached.delete(bucket_name)
+        @token_cache.buckets = cached
+      end
+
+      response
+    end
+
+    ## Objects
+
+    def list_objects(bucket_name, options = {})
+      bucket_id = _get_bucket_id(bucket_name)
+
+      unless bucket_id
+        raise Fog::Errors::NotFound, "Can not bucket #{bucket_name}"
+      end
+
+      b2_command(:b2_list_file_names, body: {
+        bucketId: bucket_id,
+        maxFileCount: 10_000
+      }.merge(options))
     end
 
     def head_object(bucket_name, file_path)
@@ -154,7 +207,7 @@ class Fog::Storage::Backblaze < Fog::Service
         headers: {
           'Authorization': upload_url['authorizationToken'],
           'Content-Type': 'b2/x-auto',
-          'X-Bz-File-Name': "#{file_path}",
+          'X-Bz-File-Name': "#{_esc_file(file_path)}",
           'X-Bz-Content-Sha1': Digest::SHA1.hexdigest(content)
         }
       )
@@ -167,7 +220,7 @@ class Fog::Storage::Backblaze < Fog::Service
     end
 
     def get_object_url(bucket_name, file_path)
-      "#{auth_response['downloadUrl']}/file/#{bucket_name}/#{file_path}"
+      "#{auth_response['downloadUrl']}/file/#{CGI.escape(bucket_name)}/#{_esc_file(file_path)}"
     end
 
     alias_method :get_object_https_url, :get_object_url
@@ -205,40 +258,6 @@ class Fog::Storage::Backblaze < Fog::Service
       end
 
       last_response
-    end
-
-    def delete_bucket(bucket_name, options = {})
-      bucket_id = _get_bucket_id(bucket_name)
-
-      unless bucket_id
-        raise Fog::Errors::NotFound, "Can not bucket #{bucket_name}"
-      end
-
-      response = b2_command(:b2_delete_bucket,
-        body: {
-          bucketId: bucket_id,
-          accountId: @options[:b2_account_id]
-        }
-      )
-
-      if !options[:is_retrying]
-        if response.status == 400 && response.json['message'] =~ /Bucket .+ does not exist/
-          logger.info("Try drop cache and try again")
-          @token_cache.buckets = nil
-          return delete_bucket(bucket_name, is_retrying: true)
-        end
-      end
-
-      if response.status >= 400
-        raise Fog::Errors::Error, "Failed delete_bucket, status = #{response.status} #{response.body}"
-      end
-
-      if cached = @token_cache.buckets
-        cached.delete(bucket_name)
-        @token_cache.buckets = cached
-      end
-
-      response
     end
 
     def _get_object_version_ids(bucket_name, file_name)
@@ -361,6 +380,10 @@ class Fog::Storage::Backblaze < Fog::Service
 
     def reset_token_cache
       @token_cache.reset
+    end
+
+    def _esc_file(file_name)
+      CGI.escape(file_name).gsub('%2F', '/')
     end
   end
 end
