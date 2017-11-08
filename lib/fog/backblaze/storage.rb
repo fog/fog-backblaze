@@ -225,6 +225,30 @@ class Fog::Storage::Backblaze < Fog::Service
 
     alias_method :get_object_https_url, :get_object_url
 
+    def get_public_object_url(bucket_name, file_path, options = {})
+      bucket_id = _get_bucket_id(bucket_name)
+
+      unless bucket_id
+        raise Fog::Errors::NotFound, "Can not bucket #{bucket_name}"
+      end
+
+      result = b2_command(:b2_get_download_authorization, body: {
+        bucketId: bucket_id,
+        fileNamePrefix: file_path,
+        validDurationInSeconds: 604800
+      }.merge(options))
+
+      if result.status == 404
+        raise Fog::Errors::NotFound, "Can not find #{file_path.inspect} in bucket #{bucket_name}"
+      end
+
+      if result.status >= 400
+        raise Fog::Errors::NotFound, "Backblaze respond with status = #{result.status} - #{result.reason_phrase}"
+      end
+
+      "#{get_object_url(bucket_name, file_path)}?Authorization=#{result.json['authorizationToken']}"
+    end
+
     def get_object(bucket_name, file_name)
       file_url = get_object_url(bucket_name, file_name)
 

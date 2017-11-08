@@ -19,7 +19,7 @@ gem install fog-backblaze
 ## Usage
 
 ```ruby
-require_relative "lib/fog/backblaze"
+require "fog/backblaze"
 
 connection = Fog::Storage.new(
   provider: 'backblaze',
