@@ -191,7 +191,8 @@ class Fog::Storage::Backblaze < Fog::Service
       result
     end
 
-    def put_object(bucket_name, file_path, content)
+    # TODO: handle options
+    def put_object(bucket_name, file_path, content, options = {})
       upload_url = @token_cache.fetch("upload_url/#{bucket_name}") do
         bucket_id = _get_bucket_id(bucket_name)
         unless bucket_id
@@ -199,6 +200,17 @@ class Fog::Storage::Backblaze < Fog::Service
         end
         result = b2_command(:b2_get_upload_url, body: {bucketId: _get_bucket_id(bucket_name)})
         result.json
+      end
+
+      extra_headers = {}
+      if options[:content_type]
+        extra_headers['Content-Type'] = options[:content_type]
+      end
+      if options[:last_modified]
+        extra_headers['X-Bz-Info-src_last_modified_millis'] = options[:last_modified]
+      end
+      if options[:content_disposition]
+        extra_headers['X-Bz-Info-b2-content-disposition'] = options[:content_disposition]
       end
 
       response = b2_command(nil,
@@ -209,7 +221,7 @@ class Fog::Storage::Backblaze < Fog::Service
           'Content-Type': 'b2/x-auto',
           'X-Bz-File-Name': "#{_esc_file(file_path)}",
           'X-Bz-Content-Sha1': Digest::SHA1.hexdigest(content)
-        }
+        }.merge(extra_headers)
       )
 
       if response.json['fileId'] == nil
