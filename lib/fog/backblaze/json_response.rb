@@ -9,7 +9,7 @@ module Fog
       end
 
       def json
-        @json ||= JSON.parse(raw_body)
+        @json ||= ::JSON.parse(raw_body)
       end
 
       def assign_json_body!
