@@ -62,6 +62,14 @@ describe "put_object" do
     assert_equal(error.class, Fog::Errors::NotFound)
     assert_equal(error.message, %{Can not find bucket "aaa"})
   end
+
+  it "should upload binary file correctly" do
+    content = File.open('test/pic.jpg', 'rb', &:read)
+    response = CONNECTION.put_object(TEST_BUCKET, "pic.jpg", content)
+
+    response = CONNECTION.get_object(TEST_BUCKET, "pic.jpg")
+    assert_equal(response.body, content)
+  end
 end
 
 describe "get_object" do
