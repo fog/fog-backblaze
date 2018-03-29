@@ -1,6 +1,6 @@
 class Fog::Storage::Backblaze::File < Fog::Model
 
-  identity :file_name, aliases: %w{fileName key}
+  identity :file_name, aliases: %w{fileName key name}
 
   attribute :content_length, aliases: 'contentLength'
   attribute :content_type, aliases: 'contentType'
@@ -9,6 +9,8 @@ class Fog::Storage::Backblaze::File < Fog::Model
   attribute :upload_timestamp, aliases: 'uploadTimestamp'
 
   attr_accessor :directory
+
+  alias_method :name, :file_name
 
   # TODO: read content from cloud on demand
   def body
@@ -35,6 +37,14 @@ class Fog::Storage::Backblaze::File < Fog::Model
     self.content_type ||= Fog::Storage.get_content_type(body)
 
     true
+  end
+
+  def destroy
+    requires :key
+    response = service.delete_object(directory.key, key)
+    return response.status < 400
+  #rescue Fog::Errors::NotFound
+  #  false
   end
 
   def public_url

@@ -124,11 +124,7 @@ class Fog::Storage::Backblaze < Fog::Service
     end
 
     def delete_bucket(bucket_name, options = {})
-      bucket_id = _get_bucket_id(bucket_name)
-
-      unless bucket_id
-        raise Fog::Errors::NotFound, "Can not bucket #{bucket_name}"
-      end
+      bucket_id = _get_bucket_id!(bucket_name)
 
       response = b2_command(:b2_delete_bucket,
         body: {
@@ -150,8 +146,9 @@ class Fog::Storage::Backblaze < Fog::Service
       end
 
       if cached = @token_cache.buckets
-        cached.delete(bucket_name)
-        @token_cache.buckets = cached
+        #cached.delete(bucket_name)
+        #@token_cache.buckets = cached
+        @token_cache.buckets = nil
       end
 
       response
@@ -160,11 +157,7 @@ class Fog::Storage::Backblaze < Fog::Service
     ## Objects
 
     def list_objects(bucket_name, options = {})
-      bucket_id = _get_bucket_id(bucket_name)
-
-      unless bucket_id
-        raise Fog::Errors::NotFound, "Can not bucket #{bucket_name}"
-      end
+      bucket_id = _get_bucket_id!(bucket_name)
 
       b2_command(:b2_list_file_names, body: {
         bucketId: bucket_id,
@@ -194,12 +187,13 @@ class Fog::Storage::Backblaze < Fog::Service
     # TODO: handle options
     def put_object(bucket_name, file_path, content, options = {})
       upload_url = @token_cache.fetch("upload_url/#{bucket_name}") do
-        bucket_id = _get_bucket_id(bucket_name)
-        unless bucket_id
-          raise Fog::Errors::NotFound, "Can not find bucket #{bucket_name.inspect}"
-        end
-        result = b2_command(:b2_get_upload_url, body: {bucketId: _get_bucket_id(bucket_name)})
+        bucket_id = _get_bucket_id!(bucket_name)
+        result = b2_command(:b2_get_upload_url, body: {bucketId: bucket_id})
         result.json
+      end
+
+      if content.is_a?(IO)
+        content = content.read
       end
 
       extra_headers = {}
@@ -238,11 +232,7 @@ class Fog::Storage::Backblaze < Fog::Service
     alias_method :get_object_https_url, :get_object_url
 
     def get_public_object_url(bucket_name, file_path, options = {})
-      bucket_id = _get_bucket_id(bucket_name)
-
-      unless bucket_id
-        raise Fog::Errors::NotFound, "Can not bucket #{bucket_name}"
-      end
+      bucket_id = _get_bucket_id!(bucket_name)
 
       result = b2_command(:b2_get_download_authorization, body: {
         bucketId: bucket_id,
@@ -301,10 +291,14 @@ class Fog::Storage::Backblaze < Fog::Service
         body: {
           startFileName: file_name,
           prefix: file_name,
-          bucketId: _get_bucket_id(bucket_name),
+          bucketId: _get_bucket_id!(bucket_name),
           maxFileCount: 1000
         }
       )
+
+      if response.status >= 400
+        raise Fog::Errors::Error, "Fetch error: #{response.json['message']} (status = #{response.status})"
+      end
 
       if response.json['files']
         version_ids = []
@@ -330,6 +324,15 @@ class Fog::Storage::Backblaze < Fog::Service
           return fetched[bucket_name] && fetched[bucket_name]['bucketId']
         end
       end
+    end
+
+    def _get_bucket_id!(bucket_name)
+      bucket_id = _get_bucket_id(bucket_name)
+      unless bucket_id
+        raise Fog::Errors::NotFound, "Can not find bucket #{bucket_name}"
+      end
+
+      return bucket_id
     end
 
     def _cached_buchets_hash(force_fetch: false)

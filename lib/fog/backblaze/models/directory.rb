@@ -5,10 +5,12 @@ class Fog::Storage::Backblaze::Directory < Fog::Model
   attribute :bucket_info, aliases: 'bucketInfo'
   attribute :bucket_type, aliases: 'bucketType'
 
+  alias_method :name, :key
+
   def destroy
     requires :key
-    service.delete_bucket(key)
-    true
+    response = service.delete_bucket(key)
+    return response.status < 400
   #rescue Fog::Errors::NotFound
   #  false
   end
