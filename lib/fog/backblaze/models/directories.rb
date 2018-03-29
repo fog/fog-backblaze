@@ -3,7 +3,7 @@ class Fog::Storage::Backblaze::Directories < Fog::Collection
 
   def all
     data = service.list_buckets
-    load(data)
+    load(data.body['buckets'])
   end
 
   def get(name)
