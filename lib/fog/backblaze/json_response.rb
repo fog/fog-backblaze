@@ -1,6 +1,6 @@
 module Fog
   module Backblaze
-    module JSONReponse
+    module JSONResponse
 
       attr_writer :json
 

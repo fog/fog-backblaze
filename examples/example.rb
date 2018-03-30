@@ -23,8 +23,7 @@ connection = Fog::Storage.new(
   #b2_bucket_name: ENV['B2_BUCKET'],
   #b2_bucket_id: '111222333444',
 
-  logger: ENV['DEBUG'] ? Logger.new(STDOUT) : nil,
-  token_cache: :memory
+  logger: ENV['DEBUG'] ? Logger.new(STDOUT) : nil
 )
 
 connection.delete_bucket("fog-smoke-test") rescue nil
