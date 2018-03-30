@@ -22,11 +22,6 @@
 #   Fog::Storage.new(provider: 'backblaze', ..., token_cache: RedisTokenCache.new)
 #
 
-module Fog
-  module Backblaze
-  end
-end
-
 class Fog::Backblaze::TokenCache
 
   def initialize
