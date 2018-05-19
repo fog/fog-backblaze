@@ -12,7 +12,7 @@
 #     end
 #     def load_data
 #       raw_data = @redis.get("b2_token_cache")
-#       raw_data ? JSON.parse(raw_data) : {}
+#       raw_data ? ::JSON.parse(raw_data) : {}
 #     end
 #     def save_data
 #       @redis.set("b2_token_cache", JSON.pretty_generate(@data))
@@ -108,7 +108,7 @@ class Fog::Backblaze::TokenCache
 
     def load_data
       if File.exist?(@file)
-        JSON.parse(File.open(@file, 'rb', &:read))
+        ::JSON.parse(File.open(@file, 'rb', &:read))
       else
         {}
       end
