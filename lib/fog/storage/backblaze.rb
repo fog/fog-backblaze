@@ -3,8 +3,9 @@ require 'digest'
 require 'cgi'
 
 class Fog::Storage::Backblaze < Fog::Service
-  requires :b2_account_id, :b2_account_token
-  recognizes :b2_bucket_name, :b2_bucket_id, :token_cache, :logger
+  #requires 
+  recognizes :b2_account_id, :b2_account_token, :b2_key_id, :b2_key_token,
+             :b2_bucket_name, :b2_bucket_id, :token_cache, :logger
 
   model_path 'fog/storage/backblaze/models'
   model       :directory

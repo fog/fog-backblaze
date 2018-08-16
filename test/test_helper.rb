@@ -1,24 +1,20 @@
 $LOAD_PATH.unshift File.expand_path("../../lib", __FILE__)
 
+require 'bundler/setup'
+require 'yaml'
+require 'pp'
 require "fog/backblaze"
 
-TEST_BUCKET = ENV['B2_BUCKET'] || 'fog-demo-1505931432'
-
-if !ENV['B2_ACCOUNT_ID'] || ENV['B2_ACCOUNT_ID'] == ""
-  puts "Missing env B2_ACCOUNT_ID"
-  exit 1
-end
-
-if !ENV['B2_ACCOUNT_TOKEN'] || ENV['B2_ACCOUNT_TOKEN'] == ""
-  puts "Missing env B2_ACCOUNT_TOKEN"
-  exit 1
-end
-
+B2_CREDENTIALS = YAML::load_file(File.join(__dir__, 'credentials.yaml'))
+TEST_BUCKET    = B2_CREDENTIALS['bucket_name']
 
 CONNECTION = Fog::Storage.new(
   provider: 'backblaze',
-  b2_account_id: ENV['B2_ACCOUNT_ID'],
-  b2_account_token: ENV['B2_ACCOUNT_TOKEN'],
+  b2_key_id: B2_CREDENTIALS['key_id'],
+  b2_key_token: B2_CREDENTIALS['key_token'],
+
+  b2_account_id: B2_CREDENTIALS['account_id'],
+  b2_account_token: B2_CREDENTIALS['account_token'],
 
   logger: !ENV['FOG_DEBUG'] && begin
     require 'logger'
@@ -34,3 +30,8 @@ CONNECTION = Fog::Storage.new(
 )
 
 require "minitest/autorun"
+require "minitest/reporters"
+Minitest::Reporters.use!(Minitest::Reporters::DefaultReporter.new)
+def MiniTest.filter_backtrace(bt)
+  bt
+end

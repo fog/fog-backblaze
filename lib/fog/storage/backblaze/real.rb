@@ -28,7 +28,7 @@ class Fog::Storage::Backblaze::Real
   # call b2_create_bucket
   def put_bucket(bucket_name, extra_options = {})
     options = {
-      accountId: @options[:b2_account_id],
+      accountId: b2_account_id,
       bucketType: extra_options.delete(:public) ? 'allPublic' : 'allPrivate',
       bucketName: bucket_name,
     }.merge(extra_options)
@@ -52,7 +52,7 @@ class Fog::Storage::Backblaze::Real
   # if options[:bucketId] presents, then bucket_name is option
   def update_bucket(bucket_name, extra_options)
     options = {
-      accountId: @options[:b2_account_id],
+      accountId: b2_account_id,
       bucketId: extra_options[:bucketId] || _get_bucket_id!(bucket_name),
     }
     if extra_options.has_key?(:public)
@@ -76,22 +76,24 @@ class Fog::Storage::Backblaze::Real
   end
 
   # call b2_list_buckets
-  def list_buckets
-    response = b2_command(:b2_list_buckets, body: {accountId: @options[:b2_account_id]})
+  def list_buckets(options = {})
+    response = b2_command(:b2_list_buckets, body: {
+      accountId: b2_account_id
+    }.merge(options))
 
     response
   end
 
   # call b2_list_buckets
   def get_bucket(bucket_name)
-    response = list_buckets
+    response = list_buckets(bucketName: bucket_name)
+
     bucket = response.json['buckets'].detect do |bucket|
       bucket['bucketName'] == bucket_name
     end
 
     unless bucket
-      raise Fog::Errors::NotFound, "No bucket with name: #{bucket_name}, " +
-        "found buckets: #{response.json['buckets'].map {|b| b['bucketName']}.join(", ")}"
+      raise Fog::Errors::NotFound, "No bucket with name: #{bucket_name}"
     end
 
     response.body = bucket
@@ -106,7 +108,7 @@ class Fog::Storage::Backblaze::Real
     response = b2_command(:b2_delete_bucket,
       body: {
         bucketId: bucket_id,
-        accountId: @options[:b2_account_id]
+        accountId: b2_account_id
       }
     )
 
@@ -292,6 +294,50 @@ class Fog::Storage::Backblaze::Real
     last_response
   end
 
+  # TODO TEST
+  # call b2_create_key
+  def create_key(name, capabilities: nil, bucket_id: nil, name_prefix: nil)
+    capabilities ||= [
+      'listKeys',
+      'writeKeys',
+      'deleteKeys',
+      'listBuckets',
+      'writeBuckets',
+      'deleteBuckets',
+      'listFiles',
+      'readFiles',
+      'shareFiles',
+      'writeFiles',
+      'deleteFiles'
+    ]
+
+    response = b2_command(:b2_create_key,
+      body: {
+        accountId: b2_account_id,
+        keyName: name,
+        capabilities: capabilities,
+        bucketId: bucket_id,
+        namePrefix: name_prefix
+      }
+    )
+  end
+
+  # call b2_list_keys
+  def list_keys
+    response = b2_command(:b2_list_keys,
+      body: {
+        accountId: b2_account_id,
+        maxKeyCount: 1000
+      }
+    )
+
+    if response.status > 400
+      raise Fog::Errors::Error, "Failed get_object, status = #{response.status} #{response.body}"
+    end
+
+    response
+  end
+
   def _get_object_version_ids(bucket_name, file_name)
     response = b2_command(:b2_list_file_versions,
       body: {
@@ -335,7 +381,7 @@ class Fog::Storage::Backblaze::Real
   def _get_bucket_id!(bucket_name)
     bucket_id = _get_bucket_id(bucket_name)
     unless bucket_id
-      raise Fog::Errors::NotFound, "Can not find bucket #{bucket_name}"
+      raise Fog::Errors::NotFound, "Can not find bucket \"#{bucket_name}\""
     end
 
     return bucket_id
@@ -365,9 +411,19 @@ class Fog::Storage::Backblaze::Real
       return cached
     end
 
+    auth_string = if @options[:b2_account_id] && @options[:b2_account_token]
+      "#{@options[:b2_account_id]}:#{@options[:b2_account_token]}"
+    elsif @options[:b2_key_id] && @options[:b2_key_token]
+      "#{@options[:b2_key_id]}:#{@options[:b2_key_token]}"
+    else
+      raise Fog::Errors::Error, "B2 credentials are required, "\
+                                "please use b2_account_id and b2_account_token or "\
+                                "b2_key_id and b2_key_token"
+    end
+
     @auth_response = json_req(:get, "https://api.backblazeb2.com/b2api/v1/b2_authorize_account",
       headers: {
-        "Authorization" => "Basic " + Base64.strict_encode64("#{@options[:b2_account_id]}:#{@options[:b2_account_token]}")
+        "Authorization" => "Basic " + Base64.strict_encode64(auth_string)
       },
       persistent: false
     )
@@ -400,7 +456,11 @@ class Fog::Storage::Backblaze::Real
   def json_req(method, url, options = {})
     start_time = Time.now.to_f
     logger.info("Req #{method.to_s.upcase} #{url}")
-    logger.debug(options.to_s)
+    if options[:body] && options[:body].size > 300
+      logger.debug(options.merge(body: "-- Body #{options[:body].size} bytes --").to_s)
+    else
+      logger.debug(options.to_s)
+    end
 
     if !options.has_key?(:persistent) || options[:persistent] == true
       @connections ||= {}
@@ -413,14 +473,20 @@ class Fog::Storage::Backblaze::Real
     end
 
     http_response.extend(Fog::Backblaze::JSONResponse)
-    http_response.assign_json_body! if http_response.josn_response?
+    if http_response.josn_response? && http_response.body.size > 0
+      http_response.assign_json_body!
+    end
 
     http_response
   ensure
     status = http_response && http_response.status
-    logger.info("Done #{method.to_s.upcase} #{url} = #{status} (#{(Time.now.to_f - start_time).round(3)} sec)")
-    logger.debug("Response Headers: #{http_response.headers}") if http_response
-    logger.debug("Response Body: #{http_response.body}") if http_response
+    logger.info("    Done #{method.to_s.upcase} #{url} = #{status} (#{(Time.now.to_f - start_time).round(3)} sec)")
+    if http_response
+      logger.debug("    Headers: #{http_response.headers}")
+      if method != :head && http_response.headers['Content-Type'].to_s !~ %r{^image/}
+        logger.debug("    Body: #{http_response.body}")
+      end
+    end
   end
 
   def reset_token_cache
@@ -429,5 +495,14 @@ class Fog::Storage::Backblaze::Real
 
   def _esc_file(file_name)
     CGI.escape(file_name).gsub('%2F', '/')
+  end
+
+  # return @options[:b2_account_id] or call b2_authorize_account when using application key
+  def b2_account_id
+    return @options[:b2_account_id] if @options[:b2_account_id]
+
+    auth = auth_response
+    p auth
+    auth['accountId']
   end
 end

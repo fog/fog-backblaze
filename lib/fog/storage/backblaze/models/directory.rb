@@ -10,6 +10,17 @@ class Fog::Storage::Backblaze::Directory < Fog::Model
 
   alias_method :name, :key
 
+  def initialize(attrs)
+    attrs = attrs.dup
+    attrs['bucket_id']       = attrs['bucketId']
+    attrs['bucket_info']     = attrs['bucketInfo']
+    attrs['bucket_type']     = attrs['bucketType']
+    attrs['cors_rules']      = attrs['corsRules']
+    attrs['lifecycle_rules'] = attrs['lifecycleRules']
+
+    super(attrs)
+  end
+
   def destroy
     requires :key
     response = service.delete_bucket(key)

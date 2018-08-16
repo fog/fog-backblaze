@@ -23,6 +23,12 @@ require "fog/backblaze"
 
 connection = Fog::Storage.new(
   provider: 'backblaze',
+
+  # with one key (more secure)
+  b2_key_id: 'xxxx',
+  b2_key_token: 'zzzxxxccc'
+
+  # full access to b2 account (less secure)
   b2_account_id: '123456',
   b2_account_token: 'aaaaabbbbbccccddddeeeeeffffff111112222223333',
 
