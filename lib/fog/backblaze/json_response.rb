@@ -16,7 +16,7 @@ module Fog
         self.body = json
       end
 
-      def josn_response?
+      def json_response?
         headers['Content-Type'].start_with?("application/json")
       end
 
