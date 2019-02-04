@@ -46,7 +46,7 @@ class Fog::Storage::Backblaze::Files < Fog::Collection
   def head(file_name, options = {})
     requires :directory
     data = service.head_object(directory.key, file_name, options)
-    file_data = _headers_to_attrs(file_response)
+    file_data = _headers_to_attrs(data)
     new(file_data)
   rescue Excon::Errors::NotFound
     nil
@@ -54,11 +54,11 @@ class Fog::Storage::Backblaze::Files < Fog::Collection
 
   def _headers_to_attrs(file_response)
     {
-      fileName:        file_response.headers['x-bz-file-name'],
-      fileId:          file_response.headers['x-bz-file-id'],
-      uploadTimestamp: file_response.headers['X-Bz-Upload-Timestamp'],
-      contentType:     file_response.headers['Content-Type'],
-      contentLength:   file_response.headers['Content-Length']
+      'fileName'        => file_response.headers['x-bz-file-name'],
+      'fileId'          => file_response.headers['x-bz-file-id'],
+      'uploadTimestamp' => file_response.headers['X-Bz-Upload-Timestamp'],
+      'contentType'     => file_response.headers['Content-Type'],
+      'contentLength'   => file_response.headers['Content-Length']
     }
   end
 

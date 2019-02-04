@@ -2,7 +2,7 @@ class Fog::Storage::Backblaze::File < Fog::Model
 
   identity :file_name, aliases: %w{fileName key name}
 
-  attribute :content_length, aliases: 'contentLength'
+  attribute :content_length, aliases: 'contentLength', :type => :integer
   attribute :content_type, aliases: 'contentType'
   attribute :file_id, aliases: 'fileId'
   attribute :file_info, aliases: 'fileInfo'
