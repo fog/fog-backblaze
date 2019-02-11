@@ -473,7 +473,7 @@ class Fog::Storage::Backblaze::Real
     end
 
     http_response.extend(Fog::Backblaze::JSONResponse)
-    if http_response.josn_response? && http_response.body.size > 0
+    if http_response.json_response? && http_response.body.size > 0
       http_response.assign_json_body!
     end
 
