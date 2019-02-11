@@ -30,7 +30,7 @@ describe "auth_response" do
 
     assert_equal(error.class, Fog::Errors::Error)
     assert_includes(error.message, "Authentication error:  (status = 401)\n" \
-                                   '{"code"=>"unauthorized", "message"=>"", "status"=>401}')
+                                   '{"code"=>"bad_auth_token", "message"=>"", "status"=>401}')
   end
 
   # TODO: solve sometimes failing

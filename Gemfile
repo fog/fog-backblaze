@@ -9,4 +9,5 @@ gemspec
 gem "bundler", ">= 1.15"
 gem "rake", "~> 12.0"
 gem "minitest", ">= 5.0"
-gem 'minitest-reporters', '1.3.2.beta2'
+gem 'minitest-reporters'
+gem 'm'

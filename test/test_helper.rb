@@ -31,7 +31,17 @@ CONNECTION = Fog::Storage.new(
 
 require "minitest/autorun"
 require "minitest/reporters"
-Minitest::Reporters.use!(Minitest::Reporters::DefaultReporter.new)
+require_relative 'support/m_rerun'
+
 def MiniTest.filter_backtrace(bt)
   bt
 end
+
+class Minitest::Reporters::DefaultReporterWithM < Minitest::Reporters::DefaultReporter
+  include MRerun
+end
+
+Minitest::Reporters.use!(
+  Minitest::Reporters::DefaultReporterWithM.new(color: true)
+)
+
