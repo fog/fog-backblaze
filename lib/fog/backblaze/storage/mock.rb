@@ -1,4 +1,4 @@
-class Fog::Storage::Backblaze::Mock
+class Fog::Backblaze::Storage::Mock
   def self.data
     @data ||= Hash.new do |hash, key|
       hash[key] = {}

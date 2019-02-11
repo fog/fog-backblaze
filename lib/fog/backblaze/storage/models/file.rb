@@ -1,4 +1,4 @@
-class Fog::Storage::Backblaze::File < Fog::Model
+class Fog::Backblaze::Storage::File < Fog::Model
 
   identity :file_name, aliases: %w{fileName key name}
 

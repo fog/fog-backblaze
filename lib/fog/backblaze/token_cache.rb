@@ -22,6 +22,8 @@
 #   Fog::Storage.new(provider: 'backblaze', ..., token_cache: RedisTokenCache.new)
 #
 
+require 'json'
+
 class Fog::Backblaze::TokenCache
 
   def initialize
@@ -116,7 +118,7 @@ class Fog::Backblaze::TokenCache
 
     def save_data
       File.open(@file, 'wb') do |f|
-        f.write(JSON.pretty_generate(@data) + "\n")
+        f.write(::JSON.pretty_generate(@data) + "\n")
       end
     end
   end

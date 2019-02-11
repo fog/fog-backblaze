@@ -1,4 +1,4 @@
-class Fog::Storage::Backblaze::Real
+class Fog::Backblaze::Storage::Real
   attr_reader :token_cache, :options
 
   def initialize(options = {})
@@ -443,7 +443,7 @@ class Fog::Storage::Backblaze::Real
     options[:headers]['Authorization'] ||= auth_response['authorizationToken']
 
     if options[:body] && !options[:body].is_a?(String)
-      options[:body] = JSON.generate(options[:body])
+      options[:body] = ::JSON.generate(options[:body])
     end
 
     request_url = options.delete(:url) || "#{auth_response['apiUrl']}/b2api/v1/#{command}"

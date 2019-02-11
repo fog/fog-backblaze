@@ -1,5 +1,5 @@
-class Fog::Storage::Backblaze::Directories < Fog::Collection
-  model Fog::Storage::Backblaze::Directory
+class Fog::Backblaze::Storage::Directories < Fog::Collection
+  model Fog::Backblaze::Storage::Directory
 
   def all
     data = service.list_buckets

@@ -1,4 +1,4 @@
-class Fog::Storage::Backblaze::Directory < Fog::Model
+class Fog::Backblaze::Storage::Directory < Fog::Model
   identity :key, aliases: %w(bucketName)
 
   attribute :bucket_id#,       aliases: 'bucketId'
@@ -56,7 +56,7 @@ class Fog::Storage::Backblaze::Directory < Fog::Model
   end
 
   def files
-    @files ||= Fog::Storage::Backblaze::Files.new(directory: self, service: service)
+    @files ||= Fog::Backblaze::Storage::Files.new(directory: self, service: service)
   end
 
   def public?

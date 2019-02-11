@@ -1,5 +1,5 @@
-class Fog::Storage::Backblaze::Files < Fog::Collection
-  model Fog::Storage::Backblaze::File
+class Fog::Backblaze::Storage::Files < Fog::Collection
+  model Fog::Backblaze::Storage::File
 
   attribute :directory
   #attribute :common_prefixes, :aliases => "CommonPrefixes"
@@ -8,7 +8,7 @@ class Fog::Storage::Backblaze::Files < Fog::Collection
   #attribute :max_results,     :aliases => ["MaxKeys", "max-keys"]
   #attribute :prefix,          :aliases => "Prefix"
 
-  model Fog::Storage::Backblaze::File
+  model Fog::Backblaze::Storage::File
 
   def all(options = {})
     requires :directory
