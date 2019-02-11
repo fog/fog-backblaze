@@ -145,7 +145,7 @@ class Fog::Storage::Backblaze::Real
     }.merge(options))
   end
 
-  def head_object(bucket_name, file_path)
+  def head_object(bucket_name, file_path, options = {})
     file_url = get_object_url(bucket_name, file_path)
 
     result = b2_command(nil,
