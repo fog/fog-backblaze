@@ -42,6 +42,7 @@ class Fog::Backblaze::Storage::File < Fog::Model
   def destroy
     requires :key
     response = service.delete_object(directory.key, key)
+    return true if response.nil?
     return response.status < 400
   #rescue Fog::Errors::NotFound
   #  false
@@ -53,10 +54,9 @@ class Fog::Backblaze::Storage::File < Fog::Model
     service.get_object_url(directory.key, key)
   end
 
-  # TODO
-  #def url(expires)
-  #  requires :key
-  #  collection.get_https_url(key, expires)
-  #end
+  def url attr
+    requires :directory, :key
+    service.get_public_object_url(directory.key, key, {})
+  end
 
 end
