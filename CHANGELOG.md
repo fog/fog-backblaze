@@ -1,3 +1,10 @@
+0.3.0 2019-06-27
+==========================================================
+
+- Fixes issues with not saving a file content_type as well as bad calls for the fog methods (Thanks @dan)
+- method name typo: josn_response?->json_response? (Thanks @MatthiasWinkelmann)
+- Change Fog::Storage::Backblaze -> Fog::Backblaze::Storage
+
 0.2.0 2018-08-16
 ==========================================================
 
