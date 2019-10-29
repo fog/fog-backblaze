@@ -237,11 +237,20 @@ class Fog::Backblaze::Storage::Real
   def get_public_object_url(bucket_name, file_path, options = {})
     bucket_id = _get_bucket_id!(bucket_name)
 
+    optional_params = {}.tap do |params|
+      params['b2ContentDisposition'] = options[:content_disposition] if options[:content_disposition]
+    end
+
+    # Request HTTP Message Body Parameters
+    # bucketId: required
+    # fileNamePrefix: required
+    # validDurationInSeconds: required
+    # b2ContentDisposition: optional
     result = b2_command(:b2_get_download_authorization, body: {
       bucketId: bucket_id,
       fileNamePrefix: file_path,
       validDurationInSeconds: 604800
-    }.merge(options))
+    }.merge(optional_params))
 
     if result.status == 404
       raise Fog::Errors::NotFound, "Can not find #{file_path.inspect} in bucket #{bucket_name}"
@@ -251,7 +260,12 @@ class Fog::Backblaze::Storage::Real
       raise Fog::Errors::NotFound, "Backblaze respond with status = #{result.status} - #{result.reason_phrase}"
     end
 
-    "#{get_object_url(bucket_name, file_path)}?Authorization=#{result.json['authorizationToken']}"
+    query_params = {}.tap do |params|
+      params['Authorization'] = result.json['authorizationToken']
+      params['b2ContentDisposition'] = options[:content_disposition] if options[:content_disposition]
+    end
+
+    "#{get_object_url(bucket_name, file_path)}?#{URI.encode_www_form(query_params)}"
   end
 
   def get_object(bucket_name, file_name)
