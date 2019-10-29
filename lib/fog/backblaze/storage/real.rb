@@ -12,8 +12,8 @@ class Fog::Backblaze::Storage::Real
       Fog::Backblaze::TokenCache.new
     elsif options[:token_cache] === false
       Fog::Backblaze::TokenCache::NullTokenCache.new
-    elsif token_cache.is_a?(Fog::Backblaze::TokenCache)
-      token_cache
+    elsif options[:token_cache].is_a?(Fog::Backblaze::TokenCache)
+      options[:token_cache]
     else
       Fog::Backblaze::TokenCache::FileTokenCache.new(options[:token_cache])
     end
