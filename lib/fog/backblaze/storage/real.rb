@@ -234,17 +234,18 @@ class Fog::Backblaze::Storage::Real
   def delete_object(bucket_name, file_name)
     version_ids = _get_object_version_ids(bucket_name, file_name)
 
-    last_response = nil
-    # raise Fog::Errors::NotFound, "Can not find #{file_name} in in bucket #{bucket_name}"
-    if version_ids.size != 0
-      logger.info("Deleting #{version_ids.size} versions of #{file_name}")
+    if version_ids.size == 0
+      raise Fog::Errors::NotFound, "Can not find #{file_name} in in bucket #{bucket_name}"
+    end
 
-      version_ids.each do |version_id|
-        last_response = b2_command(:b2_delete_file_version, body: {
-          fileName: file_name,
-          fileId: version_id
-        })
-      end
+    logger.info("Deleting #{version_ids.size} versions of #{file_name}")
+
+    last_response = nil
+    version_ids.each do |version_id|
+      last_response = b2_command(:b2_delete_file_version, body: {
+        fileName: file_name,
+        fileId: version_id
+      })
     end
 
     last_response
