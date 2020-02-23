@@ -88,8 +88,8 @@ class Fog::Backblaze::Storage::Real
   def get_bucket(bucket_name)
     response = list_buckets(bucketName: bucket_name)
 
-    bucket = response.json['buckets'].detect do |bucket|
-      bucket['bucketName'] == bucket_name
+    bucket = response.json['buckets'].detect do |bucket_data|
+      bucket_data['bucketName'] == bucket_name
     end
 
     unless bucket
@@ -124,7 +124,7 @@ class Fog::Backblaze::Storage::Real
       raise Fog::Errors::Error, "Failed delete_bucket, status = #{response.status} #{response.body}"
     end
 
-    if cached = @token_cache.buckets
+    if @token_cache.buckets
       #cached.delete(bucket_name)
       #@token_cache.buckets = cached
       @token_cache.buckets = nil
@@ -175,15 +175,11 @@ class Fog::Backblaze::Storage::Real
   # * extra_headers - hash, list of custom headers
   def put_object(bucket_name, file_path, local_file_path, options = {})
     bucket_id = _get_bucket_id!(bucket_name)
-    upload_url = @token_cache.fetch("upload_url/#{bucket_name}") do
-      result = b2_command(:b2_get_upload_url, body: {bucketId: bucket_id})
-      result.json
-    end
     
     if local_file_path.size / 1024 / 1024 > 50
-      handle_large_object_upload(bucket_name, file_path, local_file_path, options)
+      handle_large_object_upload(bucket_id, bucket_name, file_path, local_file_path, options)
     else
-      handle_small_object_upload(bucket_name, file_path, local_file_path, options)
+      handle_small_object_upload(bucket_id, bucket_name, file_path, local_file_path, options)
     end
   end
 
@@ -271,7 +267,7 @@ class Fog::Backblaze::Storage::Real
       'deleteFiles'
     ]
 
-    response = b2_command(:b2_create_key,
+    b2_command(:b2_create_key,
       body: {
         accountId: b2_account_id,
         keyName: name,
@@ -397,7 +393,7 @@ class Fog::Backblaze::Storage::Real
     @auth_response.json
   end
 
-  def handle_large_object_upload(bucket_name, file_path, local_file_path, options = {})
+  def handle_large_object_upload(bucket_id, bucket_name, file_path, local_file_path, options = {})
     # Start large file upload
     start_large_file_response = b2_command(
       :b2_start_large_file, 
@@ -420,7 +416,6 @@ class Fog::Backblaze::Storage::Real
     upload_url = get_upload_part_url_response.json["uploadUrl"]
     minimum_part_size_bytes = @token_cache.auth_response["recommendedPartSize"]
     upload_authorization_token = get_upload_part_url_response.json["authorizationToken"]
-    content_type = options[:content_type]
     local_file_size = File.stat(local_file_path).size 
     total_bytes_sent = 0
     bytes_sent_for_part = minimum_part_size_bytes
@@ -449,7 +444,7 @@ class Fog::Backblaze::Storage::Real
       req.body = file_part_data
       http = Net::HTTP.new(req.uri.host, req.uri.port)
       http.use_ssl = (req.uri.scheme == 'https')
-      res = http.start {|http| http.request(req)}
+      res = http.start {|_http| _http.request(req)}
       case res
       when Net::HTTPSuccess then
         JSON.parse(res.body)
@@ -473,7 +468,12 @@ class Fog::Backblaze::Storage::Real
     )
   end
 
-  def handle_small_object_upload(bucket_name, file_path, local_file_path, options = {})
+  def handle_small_object_upload(bucket_id, bucket_name, file_path, local_file_path, options = {})
+    upload_url = @token_cache.fetch("upload_url/#{bucket_name}") do
+      result = b2_command(:b2_get_upload_url, body: {bucketId: bucket_id})
+      result.json
+    end
+
     if local_file_path.is_a?(IO)
       local_file_path = local_file_path.read
     end
@@ -497,8 +497,8 @@ class Fog::Backblaze::Storage::Real
     end
 
     if options[:extra_headers]
-      options[:extra_headers].each do |key, value|
-        extra_headers["X-Bz-Info-#{key}"] = value
+      options[:extra_headers].each do |header_key, header_value|
+        extra_headers["X-Bz-Info-#{header_key}"] = header_value
       end
     end
 
