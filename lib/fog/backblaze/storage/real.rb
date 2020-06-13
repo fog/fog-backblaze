@@ -502,7 +502,6 @@ class Fog::Backblaze::Storage::Real
     return @options[:b2_account_id] if @options[:b2_account_id]
 
     auth = auth_response
-    p auth
     auth['accountId']
   end
 end

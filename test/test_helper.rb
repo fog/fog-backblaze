@@ -16,7 +16,7 @@ CONNECTION = Fog::Storage.new(
   b2_account_id: B2_CREDENTIALS['account_id'],
   b2_account_token: B2_CREDENTIALS['account_token'],
 
-  logger: !ENV['FOG_DEBUG'] && begin
+  logger: ENV['FOG_DEBUG'] && begin
     require 'logger'
     logger = Logger.new(STDOUT)
     logger.formatter = proc {|severity, datetime, progname, msg|

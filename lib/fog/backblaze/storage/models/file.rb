@@ -38,6 +38,8 @@ class Fog::Backblaze::Storage::File < Fog::Model
     self.content_length = Fog::Storage.get_body_size(body)
     self.content_type ||= Fog::Storage.get_content_type(body)
 
+    attributes.delete(:body)
+
     true
   end
 
