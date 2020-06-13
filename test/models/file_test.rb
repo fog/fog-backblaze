@@ -20,10 +20,6 @@ describe "storage/models/file" do
   it "should fetch body on demand" do
     @test_bucket = CONNECTION.directories.get(TEST_BUCKET)
 
-    pp @test_bucket
-    require 'irb'
-    binding.irb
-
     file_io = File.open(__FILE__)
     file = @test_bucket.files.create(key: 'spec', body: file_io)
 
