@@ -30,7 +30,7 @@ describe "put_object" do
   end
 
   it "should upload binary file correctly" do
-    content = File.open('test/pic.jpg', 'rb', &:read)
+    content = File.open('test/fixtures/pic.jpg', 'rb', &:read)
     response = CONNECTION.put_object(TEST_BUCKET, "pic.jpg", content)
 
     response = CONNECTION.get_object(TEST_BUCKET, "pic.jpg")
