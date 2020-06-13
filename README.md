@@ -18,6 +18,23 @@ gem install fog-backblaze
 
 ## Usage
 
+#### With CarrierWave
+
+```ruby
+CarrierWave.configure do |config|
+  config.fog_credentials = {
+    provider: 'backblaze',
+    b2_key_id: 'xxxx',
+    b2_key_token: 'zzzxxxccc'
+  }
+  config.fog_directory = 'my-b2-bucket-name'
+  config.fog_public = true
+end
+```
+For now only public buckets are supported with CarrierWave
+
+#### With fog library
+
 ```ruby
 require "fog/backblaze"
 
@@ -25,6 +42,7 @@ connection = Fog::Storage.new(
   provider: 'backblaze',
 
   # with one key (more secure)
+  # get your API keys at https://secure.backblaze.com/app_keys.htm
   b2_key_id: 'xxxx',
   b2_key_token: 'zzzxxxccc'
 
@@ -44,6 +62,75 @@ connection = Fog::Storage.new(
 
   token_cache: 'file.txt'
 )
+```
+
+#### Create bucket
+
+```ruby
+connection.directories.create(key: 'my-b2-bucket', public: true)
+# or
+connection.put_bucket("my-b2-bucket", public: true)
+```
+
+#### Get Bucket
+
+```ruby
+bucket = connection.directories.get('my-b2-bucket')
+bucket.name # => 'my-b2-bucket'
+bucket.bucket_id # => "2ee4e45855e60c1c8c4bbd48"
+bucket.bucket_type # => "allPrivate"
+bucket.cors_rules # => []
+```
+
+#### Delete bucket
+
+```ruby
+connection.directories.new(key: 'my-b2-bucket').destroy
+# or
+connection.delete_bucket("my-b2-bucket")
+```
+
+#### Upload File
+
+```ruby
+file = directory.files.create(
+  key: 'example.html',
+  body: File.open(__FILE__)
+)
+# or
+connection.put_object("my-b2-bucket", "example.html", File.open(__FILE__))
+```
+
+#### List Files
+
+```ruby
+directory.files.each do |file|
+  p [directory.name, file.name]
+end
+# or
+connection.list_objects("my-b2-bucket").json['files'] do |file_hash|
+  p ["my-b2-bucket", file_hash['fileName']]
+end
+```
+
+#### Read File
+```ruby
+directory.files.new(key: 'example.html').body
+# or
+connection.get_object("my-b2-bucket", "example.html")
+```
+
+#### Get public URL
+```ruby
+connection.get_public_object_url("my-b2-bucket", "example.html")
+```
+
+#### Delete File
+
+```ruby
+directory.files.new(key: 'example.html').destroy
+# or
+connection.delete_object("my-b2-bucket", "example.html")
 ```
 
 See [example](examples/example.rb) for more details

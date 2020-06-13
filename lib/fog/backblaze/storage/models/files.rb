@@ -8,8 +8,6 @@ class Fog::Backblaze::Storage::Files < Fog::Collection
   #attribute :max_results,     :aliases => ["MaxKeys", "max-keys"]
   #attribute :prefix,          :aliases => "Prefix"
 
-  model Fog::Backblaze::Storage::File
-
   def all(options = {})
     requires :directory
 

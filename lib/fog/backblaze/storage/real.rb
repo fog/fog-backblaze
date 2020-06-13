@@ -501,9 +501,6 @@ class Fog::Backblaze::Storage::Real
   # return @options[:b2_account_id] or call b2_authorize_account when using application key
   def b2_account_id
     return @options[:b2_account_id] if @options[:b2_account_id]
-
-    auth = auth_response
-    p auth
-    auth['accountId']
+    auth_response['accountId']
   end
 end

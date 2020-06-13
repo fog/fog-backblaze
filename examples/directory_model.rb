@@ -59,12 +59,8 @@ p directory
 
 # delete new bucket on exit
 at_exit do
-  directory.files.each do |file|
-    puts "removing file #{file.key}"
-    p file.destroy
-  end
   puts "removing a bucket #{directory.key}"
-  p directory.destroy
+  p directory.destroy_recursive
 end
 
 # list directories (buckets)

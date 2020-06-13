@@ -12,9 +12,11 @@ class Fog::Backblaze::Storage::File < Fog::Model
 
   alias_method :name, :file_name
 
-  # TODO: read content from cloud on demand
   def body
-    attributes[:body] #||= file_id && (file = collection.get(identity)) ? file.body : ""
+    attributes[:body] ||= begin
+      response = service.get_object(directory.key, file_name)
+      response.body
+    end
   end
 
   def body=(new_body)
@@ -35,6 +37,8 @@ class Fog::Backblaze::Storage::File < Fog::Model
 
     self.content_length = Fog::Storage.get_body_size(body)
     self.content_type ||= Fog::Storage.get_content_type(body)
+
+    attributes.delete(:body)
 
     true
   end
