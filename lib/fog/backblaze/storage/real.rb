@@ -212,10 +212,10 @@ class Fog::Backblaze::Storage::Real
       url: upload_url['uploadUrl'],
       body: content,
       headers: {
-        'Authorization' => upload_url['authorizationToken'],
-        'Content-Type' => 'b2/x-auto',
-        'X-Bz-File-Name' => "#{_esc_file(file_path)}",
-        'X-Bz-Content-Sha1' => Digest::SHA1.hexdigest(content)
+        'Authorization': upload_url['authorizationToken'],
+        'Content-Type': 'b2/x-auto',
+        'X-Bz-File-Name': "#{b2_url_encode(file_path)}",
+        'X-Bz-Content-Sha1': Digest::SHA1.hexdigest(content)
       }.merge(extra_headers)
     )
 
@@ -228,7 +228,7 @@ class Fog::Backblaze::Storage::Real
 
   # generates url regardless if bucket is private or not
   def get_object_url(bucket_name, file_path)
-    "#{auth_response['downloadUrl']}/file/#{CGI.escape(bucket_name)}/#{_esc_file(file_path)}"
+    "#{auth_response['downloadUrl']}/file/#{b2_url_encode(bucket_name)}/#{b2_url_encode(file_path)}"
   end
 
   alias_method :get_object_https_url, :get_object_url
@@ -493,8 +493,9 @@ class Fog::Backblaze::Storage::Real
     @token_cache.reset
   end
 
-  def _esc_file(file_name)
-    CGI.escape(file_name).gsub('%2F', '/')
+  # ref: https://www.backblaze.com/b2/docs/string_encoding.html
+  def b2_url_encode(str)
+    URI.encode_www_form_component(str.force_encoding(Encoding::UTF_8)).gsub("%2F", "/")
   end
 
   # return @options[:b2_account_id] or call b2_authorize_account when using application key
