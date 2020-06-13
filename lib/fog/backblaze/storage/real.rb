@@ -135,6 +135,21 @@ class Fog::Backblaze::Storage::Real
 
   ## Objects
 
+  # call b2_copy_file
+  def copy_object(source_bucket_name, source_object_name, target_bucket_name, target_object_name, options = {})
+    file_id = _get_object_version_ids(source_bucket_name, source_object_name)[0]
+    response = b2_command(
+      'b2_copy_file',
+      body: {
+        sourceFileId: file_id,
+        destinationBucketId: _get_bucket_id(target_bucket_name),
+        fileName: target_object_name
+      }
+    )
+
+    response
+  end
+
   # call b2_list_file_names
   def list_objects(bucket_name, options = {})
     bucket_id = _get_bucket_id!(bucket_name)
