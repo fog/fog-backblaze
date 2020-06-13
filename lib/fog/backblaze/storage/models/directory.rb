@@ -29,6 +29,11 @@ class Fog::Backblaze::Storage::Directory < Fog::Model
   #  false
   end
 
+  def destroy_recursive
+    files.each(&:destroy)
+    destroy
+  end
+
   def save
     requires :key
     options = {}
