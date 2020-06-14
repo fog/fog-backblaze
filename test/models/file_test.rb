@@ -26,7 +26,7 @@ describe "storage/models/file" do
     file_content = file_io.tap(&:rewind).read
 
     assert_equal(file.body, file_content)
-    assert_equal(@test_bucket.files.first.body, file_content)
+    assert_equal(@test_bucket.files.new(key: 'spec').body, file_content)
   end
 
 end
