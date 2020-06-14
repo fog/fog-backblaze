@@ -3,7 +3,7 @@ require_relative "../test_helper"
 describe "delete_object" do
   it "should obrain download url" do
     content = Time.now.to_s
-    file = "test-delete_object"
+    file = "test-delete_object-#{rand.to_s.sub(".", '')}"
 
     CONNECTION.put_object(TEST_BUCKET, file, content)
 
