@@ -30,7 +30,7 @@ class Fog::Backblaze::Storage::Files < Fog::Collection
   end
 
   # TODO: download url for private buckets
-  def get_https_url(file_name, expires, options)
+  def get_https_url(file_name, expires, options = {})
     requires :directory
     service.get_object_https_url(directory.key, file_name, expires, options)
   end

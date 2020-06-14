@@ -139,7 +139,17 @@ class Fog::Backblaze::Storage::Real
   ## Objects
 
   # call b2_copy_file
-  def copy_object(source_object:, target_object:, bucket: nil, source_bucket: nil, target_bucket: nil, options: {})
+  def copy_object(source_bucket, source_object, target_bucket, target_object, options = {})
+    b2_copy_object(
+      source_object: source_object,
+      target_object: target_object,
+      source_bucket: source_bucket,
+      target_bucket: target_bucket,
+      options: options
+    )
+  end
+
+  def b2_copy_object(source_object:, target_object:, bucket: nil, source_bucket: nil, target_bucket: nil, options: {})
     if bucket.nil? && source_bucket.nil?
       raise ArgumentError, "arguemnt bucket either source_bucket is required for copy_object()"
     end
@@ -246,6 +256,14 @@ class Fog::Backblaze::Storage::Real
       end
     end
 
+    c_name = content.class.to_s
+    if c_name == "Rack::Test::UploadedFile" || c_name == "ActionDispatch::Http::UploadedFile" || content.is_a?(File)
+      content.rewind
+      content = content.read
+    else
+      Digest::SHA1.hexdigest(content)
+    end
+
     response = b2_command(nil,
       url: upload_url['uploadUrl'],
       body: content,
@@ -265,7 +283,17 @@ class Fog::Backblaze::Storage::Real
   end
 
   # generates url regardless if bucket is private or not
-  def get_object_url(bucket_name, file_path)
+  def get_object_url(bucket_name, file_path, expires_or_options = nil, options = {})
+    if options == nil && expires_or_options.is_a?(Hash)
+      options = expires_or_options
+      expires_or_options = nil
+    end
+
+    if expires_or_options
+      options[:validDurationInSeconds] = expires_or_options.to_i
+      return get_public_object_url(bucket_name, file_path, options)
+    end
+
     "#{auth_response['downloadUrl']}/file/#{b2_url_encode(bucket_name)}/#{b2_url_encode(file_path)}"
   end
 

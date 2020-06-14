@@ -1,6 +1,6 @@
 require_relative "../test_helper"
 
-describe "copy_object" do
+describe "b2_copy_object" do
 
   after do
     if @new_file
@@ -19,7 +19,7 @@ describe "copy_object" do
 
     CONNECTION.put_object(TEST_BUCKET, @new_file, content)
 
-    CONNECTION.copy_object(
+    CONNECTION.b2_copy_object(
       source_bucket: TEST_BUCKET,
       source_object: @new_file,
       target_bucket: TEST_BUCKET,
@@ -33,7 +33,7 @@ describe "copy_object" do
 
   it "should raise error when no :bucket argument passed" do
     error = assert_raises do
-      CONNECTION.copy_object(source_object: 'a', target_object: 'a')
+      CONNECTION.b2_copy_object(source_object: 'a', target_object: 'a')
     end
 
     assert_equal(error.class, ArgumentError)
@@ -46,7 +46,7 @@ describe "copy_object" do
     CONNECTION.put_object(TEST_BUCKET, @new_file, Time.now.to_s)
 
     error = assert_raises do
-      CONNECTION.copy_object(
+      CONNECTION.b2_copy_object(
         bucket: TEST_BUCKET,
         source_object: @new_file,
         target_object: "aaa",
@@ -60,7 +60,7 @@ describe "copy_object" do
 
   it "should raise error when can't find source object" do
     error = assert_raises do
-      res = CONNECTION.copy_object(
+      res = CONNECTION.b2_copy_object(
         bucket: TEST_BUCKET,
         source_object: 'aaa1',
         target_object: 'aaa2'

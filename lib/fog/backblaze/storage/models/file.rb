@@ -57,10 +57,17 @@ class Fog::Backblaze::Storage::File < Fog::Model
     service.get_object_url(directory.key, key)
   end
 
-  # TODO
-  #def url(expires)
-  #  requires :key
-  #  collection.get_https_url(key, expires)
-  #end
+  def url(expires)
+   requires :key
+   collection.get_https_url(key, expires)
+  end
+
+  def copy(target_directory_key, target_file_key, options = {})
+    requires :directory, :key
+
+    service.copy_object(directory.key, key, target_directory_key, target_file_key, options)
+    target_directory = service.directories.new(key: target_directory_key)
+    target_directory.files.head(target_file_key)
+  end
 
 end
