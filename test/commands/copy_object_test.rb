@@ -4,10 +4,10 @@ describe "copy_object" do
 
   after do
     if @new_file
-      CONNECTION.delete_object(TEST_BUCKET, @new_file)
+      CONNECTION.delete_object(TEST_BUCKET, @new_file) rescue nil
     end
     if @copied_file
-      CONNECTION.delete_object(TEST_BUCKET, @copied_file)
+      CONNECTION.delete_object(TEST_BUCKET, @copied_file) rescue nil
     end
   end
 
