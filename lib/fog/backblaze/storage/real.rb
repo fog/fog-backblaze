@@ -139,16 +139,31 @@ class Fog::Backblaze::Storage::Real
   ## Objects
 
   # call b2_copy_file
-  def copy_object(source_bucket_name, source_object_name, target_bucket_name, target_object_name, options = {})
-    file_id = _get_object_version_ids(source_bucket_name, source_object_name)[0]
+  def copy_object(source_object:, target_object:, bucket: nil, source_bucket: nil, target_bucket: nil, options: {})
+    if bucket.nil? && source_bucket.nil?
+      raise ArgumentError, "arguemnt bucket either source_bucket is required for copy_object()"
+    end
+    source_bucket ||= bucket
+    target_bucket ||= source_bucket
+
+    file_id = _get_object_version_ids(source_bucket, source_object)[0]
+
+    if file_id == nil
+      raise Fog::Errors::NotFound, "Command copy_object failed: Can not find source object: #{source_object} in bucket #{source_bucket}"
+    end
+
     response = b2_command(
-      'b2_copy_file',
+      :b2_copy_file,
       body: {
         sourceFileId: file_id,
-        destinationBucketId: _get_bucket_id(target_bucket_name),
-        fileName: target_object_name
+        destinationBucketId: _get_bucket_id(target_bucket),
+        fileName: target_object
       }
     )
+
+    if response.status >= 400
+      raise Fog::Errors::Error, "Backblaze respond with status = #{response.status} - #{response.body}"
+    end
 
     response
   end
@@ -176,7 +191,7 @@ class Fog::Backblaze::Storage::Real
     end
 
     if result.status >= 400
-      raise Fog::Errors::NotFound, "Backblaze respond with status = #{result.status} - #{result.reason_phrase}"
+      raise Fog::Errors::Error, "Backblaze respond with status = #{result.status} - #{result.reason_phrase}"
     end
 
     result
