@@ -13,7 +13,7 @@ describe "head_object" do
 
   it "should give project headers" do
     content = Time.now.to_s
-    filename = "test-head_object-#{RUBY_VERSION}.csv"
+    filename = "test-head_object-#{rand.to_s.sub(".", '')}.csv"
     CONNECTION.put_object(TEST_BUCKET, filename, content)
 
     response = CONNECTION.head_object(TEST_BUCKET, filename)
