@@ -1,3 +1,16 @@
+0.4.0 2020-06-27
+==========================================================
+
+- Don't print JSON response on first call to b2_account_id (@brycied00d)
+- Use string Hash indexes in put_object instead of symbols (@brycied00d)
+- Fix token_cache option (@bnauta)
+- Accept Content Disposition headers for auth/download (@bnauta)
+- Standardize and test URL encoding calls (@bnauta)
+- Read files remotely on demand (@shanecav84)
+- Implement copy_object (@shanecav84)
+- Add user agent to http calls
+- Add support for `connection.options[:headers]`
+
 0.3.0 2019-06-27
 ==========================================================
 

@@ -1,6 +1,9 @@
 class Fog::Backblaze::Storage::Real
   attr_reader :token_cache, :options
 
+  # https://www.backblaze.com/b2/docs/integration_checklist.html
+  USER_AGENT = "fog-backblaze/#{Fog::Backblaze::VERSION}+ruby/#{RUBY_VERSION}".freeze
+
   def initialize(options = {})
     @options = options
     @logger = @options[:logger] || begin
@@ -323,7 +326,6 @@ class Fog::Backblaze::Storage::Real
     last_response
   end
 
-  # TODO TEST
   # call b2_create_key
   def create_key(name, capabilities: nil, bucket_id: nil, name_prefix: nil)
     capabilities ||= [
@@ -361,7 +363,22 @@ class Fog::Backblaze::Storage::Real
     )
 
     if response.status > 400
-      raise Fog::Errors::Error, "Failed get_object, status = #{response.status} #{response.body}"
+      raise Fog::Errors::Error, "Failed list_keys, status = #{response.status} #{response.body}"
+    end
+
+    response
+  end
+
+  # call b2_delete_key
+  def delete_key(key_id)
+    response = b2_command(:b2_list_keys,
+      body: {
+        applicationKeyId: key_id
+      }
+    )
+
+    if response.status > 400
+      raise Fog::Errors::Error, "Failed delete_key, status = #{response.status} #{response.body}"
     end
 
     response
@@ -489,6 +506,12 @@ class Fog::Backblaze::Storage::Real
       logger.debug(options.merge(body: "-- Body #{options[:body].size} bytes --").to_s)
     else
       logger.debug(options.to_s)
+    end
+
+    options[:headers] ||= {}
+    options[:headers]['User-Agent'] ||= USER_AGENT
+    if @options[:headers] && @options[:headers].is_a?(Hash)
+      options[:headers].merge!(@options[:headers])
     end
 
     if !options.has_key?(:persistent) || options[:persistent] == true

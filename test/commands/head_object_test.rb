@@ -13,11 +13,12 @@ describe "head_object" do
 
   it "should give project headers" do
     content = Time.now.to_s
-    CONNECTION.put_object(TEST_BUCKET, "test-head_object.csv", content)
+    filename = "test-head_object-#{RUBY_VERSION}.csv"
+    CONNECTION.put_object(TEST_BUCKET, filename, content)
 
-    response = CONNECTION.head_object(TEST_BUCKET, "test-head_object.csv")
+    response = CONNECTION.head_object(TEST_BUCKET, filename)
 
-    assert_equal(response.headers['x-bz-file-name'], "test-head_object.csv")
+    assert_equal(response.headers['x-bz-file-name'], filename)
     assert_equal(response.headers['x-bz-content-sha1'], Digest::SHA1.hexdigest(content))
     assert_equal(response.headers['Content-Type'], "text/csv")
     assert_equal(response.headers['Content-Length'], content.size.to_s)

@@ -3,6 +3,7 @@ $LOAD_PATH.unshift File.expand_path("../../lib", __FILE__)
 require 'bundler/setup'
 require 'yaml'
 require 'pp'
+require 'irb'
 require "fog/backblaze"
 
 B2_CREDENTIALS = YAML::load_file(File.join(__dir__, 'credentials.yaml'))
@@ -13,8 +14,8 @@ CONNECTION = Fog::Storage.new(
   b2_key_id: B2_CREDENTIALS['key_id'],
   b2_key_token: B2_CREDENTIALS['key_token'],
 
-  b2_account_id: B2_CREDENTIALS['account_id'],
-  b2_account_token: B2_CREDENTIALS['account_token'],
+  b2_account_id: B2_CREDENTIALS['account_id'] || ENV['B2_ACCOUNT_ID'],
+  b2_account_token: B2_CREDENTIALS['account_token'] || ENV['B2_ACCOUNT_TOKEN'],
 
   logger: ENV['FOG_DEBUG'] && begin
     require 'logger'
