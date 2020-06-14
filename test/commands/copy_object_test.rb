@@ -31,7 +31,7 @@ describe "copy_object" do
     assert_equal(downloaded_copy.body, content)
   end
 
-  it "should raise error when not :bucket argument passed" do
+  it "should raise error when no :bucket argument passed" do
     error = assert_raises do
       CONNECTION.copy_object(source_object: 'a', target_object: 'a')
     end
@@ -40,7 +40,25 @@ describe "copy_object" do
     assert_equal(error.message, "arguemnt bucket either source_bucket is required for copy_object()")
   end
 
-  it "should raise error when not :bucket argument passed" do
+  it "should raise error when target_bucket can not be found" do
+    prefix = rand.to_s.sub('.', '')
+    @new_file = "#{prefix}-test-copy_object-original"
+    CONNECTION.put_object(TEST_BUCKET, @new_file, Time.now.to_s)
+
+    error = assert_raises do
+      CONNECTION.copy_object(
+        bucket: TEST_BUCKET,
+        source_object: @new_file,
+        target_object: "aaa",
+        target_bucket: "aaa"
+      )
+    end
+
+    assert_equal(error.class, Fog::Errors::NotFound)
+    assert_equal(error.message, "Command copy_object failed: Can not find target bucket: aaa")
+  end
+
+  it "should raise error when can't find source object" do
     error = assert_raises do
       res = CONNECTION.copy_object(
         bucket: TEST_BUCKET,

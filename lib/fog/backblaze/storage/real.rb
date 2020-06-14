@@ -144,7 +144,6 @@ class Fog::Backblaze::Storage::Real
       raise ArgumentError, "arguemnt bucket either source_bucket is required for copy_object()"
     end
     source_bucket ||= bucket
-    target_bucket ||= source_bucket
 
     file_id = _get_object_version_ids(source_bucket, source_object)[0]
 
@@ -152,11 +151,17 @@ class Fog::Backblaze::Storage::Real
       raise Fog::Errors::NotFound, "Command copy_object failed: Can not find source object: #{source_object} in bucket #{source_bucket}"
     end
 
+    target_bucket_id = target_bucket ? _get_bucket_id(target_bucket) : nil
+
+    if target_bucket && !target_bucket_id
+      raise Fog::Errors::NotFound, "Command copy_object failed: Can not find target bucket: #{target_bucket}"
+    end
+
     response = b2_command(
       :b2_copy_file,
       body: {
         sourceFileId: file_id,
-        destinationBucketId: _get_bucket_id(target_bucket),
+        destinationBucketId: target_bucket_id,
         fileName: target_object
       }
     )
