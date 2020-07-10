@@ -268,10 +268,10 @@ class Fog::Backblaze::Storage::Real
       url: upload_url['uploadUrl'],
       body: content,
       headers: {
-        'Authorization': upload_url['authorizationToken'],
-        'Content-Type': 'b2/x-auto',
-        'X-Bz-File-Name': "#{b2_url_encode(file_path)}",
-        'X-Bz-Content-Sha1': Digest::SHA1.hexdigest(content)
+        'Authorization' => upload_url['authorizationToken'],
+        'Content-Type' => 'b2/x-auto',
+        'X-Bz-File-Name' => "#{b2_url_encode(file_path)}",
+        'X-Bz-Content-Sha1' => Digest::SHA1.hexdigest(content)
       }.merge(extra_headers)
     )
 
