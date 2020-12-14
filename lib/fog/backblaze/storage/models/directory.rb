@@ -6,6 +6,8 @@ class Fog::Backblaze::Storage::Directory < Fog::Model
   attribute :bucket_type#,     aliases: 'bucketType'
   attribute :cors_rules#,      aliases: 'corsRules'
   attribute :lifecycle_rules#, aliases: 'lifecycleRules'
+  attribute :prefix,           aliases: 'prefix'
+
   attribute :revision
 
   alias_method :name, :key
@@ -17,6 +19,7 @@ class Fog::Backblaze::Storage::Directory < Fog::Model
     attrs['bucket_type']     = attrs['bucketType']
     attrs['cors_rules']      = attrs['corsRules']
     attrs['lifecycle_rules'] = attrs['lifecycleRules']
+    attrs['prefix']          = attrs['Prefix']
 
     super(attrs)
   end
@@ -61,7 +64,7 @@ class Fog::Backblaze::Storage::Directory < Fog::Model
   end
 
   def files
-    @files ||= Fog::Backblaze::Storage::Files.new(directory: self, service: service)
+    @files ||= Fog::Backblaze::Storage::Files.new(directory: self, service: service).all(prefix: prefix)
   end
 
   def public?
