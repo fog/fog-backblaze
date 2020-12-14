@@ -6,10 +6,14 @@ class Fog::Backblaze::Storage::Directories < Fog::Collection
     load(data.body['buckets'])
   end
 
-  def get(name)
+  def get(name, options = {})
     list_response = service.list_buckets
     bucket = list_response.json['buckets'].detect {|bucket| bucket['bucketName'] == name }
-    return new(bucket) if bucket
+
+    if bucket
+      directory = new(bucket).merge_attributes(options)
+      return directory
+    end
   end
 
 end
